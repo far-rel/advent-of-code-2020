@@ -28,10 +28,23 @@ defmodule Puzzle10 do
     data
   end
 
-  defp combinations_for_streak(1), do: 1
-  defp combinations_for_streak(2), do: 2
-  defp combinations_for_streak(3), do: 4
-  defp combinations_for_streak(4), do: 7
+  defp combinations_for_streak(n) do
+    Enum.map(0..(:math.pow(4, n + 1) |> trunc()), fn (x) ->
+      Integer.to_string(x, 4)
+    end)
+    |> Enum.map(fn (string) ->
+      string
+      |> String.split("")
+      |> Enum.reject(fn (el) -> el == "" end)
+      |> Enum.map(&String.to_integer/1)
+      |> Enum.reject(fn (el) -> el == 0 end)
+    end)
+    |> Enum.reject(fn (array) ->
+      Enum.sum(array) != n
+    end)
+    |> Enum.uniq()
+    |> Enum.count()
+  end
 
   defp print_one_and_three(data) do
     {jolt_1, jolt_3, _} = data
