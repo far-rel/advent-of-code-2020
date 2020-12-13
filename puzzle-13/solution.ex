@@ -1,3 +1,4 @@
+# Credit: https://rosettacode.org/wiki/Modular_inverse#Elixir
 defmodule Modular do
   def extended_gcd(a, b) do
     {last_remainder, last_x} = extended_gcd(abs(a), abs(b), 1, 0, 0, 1)
