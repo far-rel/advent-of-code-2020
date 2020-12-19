@@ -1,58 +1,47 @@
 defmodule Puzzle19 do
   def solve() do
     {rules, messages} = read_data()
-    IO.inspect("Generating valid messages")
-    valid_messages = generate_valid_messages(rules, 0) |> Enum.uniq()
-
+    regex_string = generate_regex(rules, 0) |> IO.inspect()
+    {:ok, regex} = Regex.compile("^#{regex_string}$")
     messages
-    |> Enum.filter(fn (message) ->
-      IO.inspect("Checking: #{message}")
-      Enum.any?(valid_messages, fn (valid_message) ->
-        {:ok, regex} = Regex.compile("$#{valid_message}^")
-        Regex.match?(regex, message)
-      end)
-    end)
+    |> Enum.filter(fn (message) -> Regex.match?(regex, message) end)
     |> Enum.count()
     |> IO.inspect()
   end
 
-  defp generate_valid_messages(rules, 11) do
-    tmp_42 = generate_valid_messages(rules, 42) |> Enum.map(fn (message) -> "(#{message})+" end)
-    tmp_31 = generate_valid_messages(rules, 31) |> Enum.map(fn (message) -> "(#{message})+" end)
-    combine(tmp_42, tmp_31)
+  defp generate_regex(rules, 11) do
+    tmp_42 = generate_regex(rules, 42)
+    tmp_31 = generate_regex(rules, 31)
+    IO.inspect(generate_regex(rules, 42))
+    string = 1..5
+    |> Enum.map(fn (i) ->
+      "#{String.duplicate(tmp_42, i)}#{String.duplicate(tmp_31, i)}"
+    end)
+    |> Enum.join("|")
+    "(#{string})"
   end
-  defp generate_valid_messages(rules, 8) do
-    generate_valid_messages(rules, 42)
-    |> Enum.map(fn (message) -> "(#{message})+" end)
+  defp generate_regex(rules, 8) do
+    "#{generate_regex(rules, 42)}+"
   end
-  defp generate_valid_messages(rules, rule_index) do
+  defp generate_regex(rules, rule_index) do
     Map.get(rules, rule_index)
     |> case do
       rule when is_list(rule) ->
-        rule
+        tmp = rule
         |> Enum.map(fn (rule_indexes) ->
           Enum.map(rule_indexes, fn (new_rule_index) ->
-            generate_valid_messages(rules, new_rule_index)
+            generate_regex(rules, new_rule_index)
           end)
-          |> Enum.reduce([""], fn (valid_messages, acc) ->
-            Enum.map(acc, fn (acc1) ->
-              Enum.map(valid_messages, fn (valid_message) ->
-                acc1 <> valid_message
-              end)
-            end)
-            |> List.flatten()
-          end)
+          |> Enum.join("")
         end)
-        |> List.flatten()
-        |> Enum.uniq()
-      string -> [string]
+        tmp
+        |> Enum.count()
+        |> case do
+          1 -> Enum.at(tmp, 0)
+          _ -> "(#{Enum.join(tmp, "|")})"
+        end
+      string -> string
     end
-  end
-
-  defp combine(array1, array2) do
-    Enum.reduce(array1, [], fn (el, acc) ->
-      acc ++ Enum.map(array2, fn (el2) -> el <> el2 end)
-    end)
   end
 
   defp read_data() do
